@@ -1,4 +1,4 @@
-import '../styles/globals.css'
+import '../../styles/globals.css'
 import type { AppProps } from 'next/app'
 import {
   ApolloClient,
@@ -10,7 +10,7 @@ import { supabase, supabaseAnonKey, supabaseUrl } from '../constants'
 import { setContext } from '@apollo/client/link/context'
 
 const httpLink = createHttpLink({
-  uri: '/graphql',
+  uri: `${supabaseUrl}/graphql/v1`,
 })
 
 const authLink = setContext(async (_, { headers }) => {
@@ -23,20 +23,20 @@ const authLink = setContext(async (_, { headers }) => {
       authorization: `Bearer ${
         session ? session.access_token : supabaseAnonKey
       }`,
+      apikey: supabaseAnonKey,
     },
   }
 })
 
-const client = new ApolloClient({
+const apolloClient = new ApolloClient({
   uri: `${supabaseUrl}/graphql/v1`,
   link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
-  headers: { apikey: supabaseAnonKey },
 })
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ApolloProvider client={client}>
+    <ApolloProvider client={apolloClient}>
       <Component {...pageProps} />
     </ApolloProvider>
   )

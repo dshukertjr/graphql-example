@@ -45,11 +45,7 @@ const Home: NextPage = () => {
       </Head>
 
       <main className="flex items-center justify-center min-h-screen bg-black">
-        {session ? (
-          <TodoList accessToken={session.access_token} />
-        ) : (
-          <LoginForm />
-        )}
+        {session ? <TodoList /> : <LoginForm />}
       </main>
     </>
   )
@@ -57,7 +53,7 @@ const Home: NextPage = () => {
 
 export default Home
 
-const GET_ROCKET_INVENTORY = gql(/* GraphQL */ `
+const tasksQuery = gql(/* GraphQL */ `
   query TasksQuery($orderBy: [tasksOrderBy!]) {
     tasksCollection(orderBy: $orderBy) {
       edges {
@@ -71,25 +67,21 @@ const GET_ROCKET_INVENTORY = gql(/* GraphQL */ `
   }
 `)
 
-const TodoList = ({ accessToken }: { accessToken: string }): JSX.Element => {
-  const { loading, error, data } = useQuery(
-    GET_ROCKET_INVENTORY,
-    // variables are also typed!
-    {
-      variables: {
-        orderBy: [
-          {
-            created_at: OrderByDirection.AscNullsFirst,
-          },
-        ],
-      },
-    }
-  )
+const TodoList = (): JSX.Element => {
+  const { loading, error, data } = useQuery(tasksQuery, {
+    variables: {
+      orderBy: [
+        {
+          created_at: OrderByDirection.AscNullsFirst,
+        },
+      ],
+    },
+  })
 
   if (loading) {
     return <div>Loading</div>
   } else if (error) {
-    return <div>Error occured</div>
+    return <div>Error occured: {error.message}</div>
   }
   const tasks = data!.tasksCollection!.edges
   return (
