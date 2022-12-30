@@ -11,3 +11,6 @@ create table if not exists tasks (
     created_at timestamptz not null default now()
 );
 ```
+
+1. run `npm install`
+1. run `npm run compile` to generate types
