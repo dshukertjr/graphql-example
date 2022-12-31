@@ -1,26 +1,21 @@
-import {
-  createClient as createSupabaseClient,
-  Session,
-  User,
-} from '@supabase/supabase-js'
-import type { NextComponentType, NextPage } from 'next'
+import { Session } from '@supabase/supabase-js'
+import type { NextPage } from 'next'
 import Head from 'next/head'
-import React, { ReactComponentElement, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
-import { gql } from '../src/__generated__/gql'
 import { OrderByDirection } from '../src/__generated__/graphql'
-import { supabase, supabaseAnonKey, supabaseUrl } from '../src/constants'
+import { supabase, taskMutation, tasksQuery } from '../src/constants'
 
 const Home: NextPage = () => {
   const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {
-    const initialize = async () => {
+    const getInitialSession = async () => {
       const initialSession = (await supabase.auth.getSession())?.data.session
       setSession(initialSession)
     }
 
-    initialize()
+    getInitialSession()
 
     const authListener = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -41,7 +36,7 @@ const Home: NextPage = () => {
 
       <AppHeader isSignedIn={!!session} />
 
-      <main className="text-white flex-grow max-w-4xl mx-auto">
+      <main className="text-white flex-grow max-w-4xl mx-auto min-h-0">
         {session ? <TodoList /> : <LoginForm />}
       </main>
     </div>
@@ -50,38 +45,18 @@ const Home: NextPage = () => {
 
 export default Home
 
-const tasksQuery = gql(`
-  query TasksQuery($orderBy: [tasksOrderBy!]) {
-    tasksCollection(orderBy: $orderBy) {
-      edges {
-        node {
-          title
-          is_completed
-          id
-        }
-      }
-    }
-  }
-`)
-
-const taskMutation = gql(`
-  mutation TaskMutation($objects: [tasksInsertInput!]!) {
-    insertIntotasksCollection(objects: $objects) {
-      records {
-        title
-      }
-    }
-  }
-`)
-
 const TodoList = (): JSX.Element => {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     const formElement = event.currentTarget
     event.preventDefault()
-    if (!taskTitle) return
-    await insertTask()
-    console.log({ mutationError })
-    console.log({ mutationData })
+    const { title } = Object.fromEntries(new FormData(event.currentTarget))
+    if (typeof title !== 'string') return
+    if (!title) return
+    await insertTask({
+      variables: {
+        objects: [{ title }],
+      },
+    })
     formElement.reset()
   }
 
@@ -93,25 +68,18 @@ const TodoList = (): JSX.Element => {
     variables: {
       orderBy: [
         {
-          created_at: OrderByDirection.AscNullsFirst,
+          created_at: OrderByDirection.DescNullsFirst,
         },
       ],
     },
   })
 
-  const [taskTitle, setTaskTitle] = useState<string>('')
-
-  const [insertTask, { error: mutationError, data: mutationData }] =
-    useMutation(taskMutation, {
-      // variables are also typed!
-      variables: {
-        objects: [
-          {
-            title: taskTitle,
-          },
-        ],
-      },
-    })
+  const [
+    insertTask,
+    { error: mutationError, data: mutationData, loading: mutationLoading },
+  ] = useMutation(taskMutation, {
+    refetchQueries: [{ query: tasksQuery }],
+  })
 
   if (loading) {
     return <div>Loading</div>
@@ -122,7 +90,7 @@ const TodoList = (): JSX.Element => {
   const tasks = queryData!.tasksCollection!.edges
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-grow">
+      <div className="flex-grow min-h-0 overflow-y-auto">
         {tasks.map((task) => (
           <div key={task.node.id} className="text-lg">
             {task.node.title}
@@ -132,16 +100,16 @@ const TodoList = (): JSX.Element => {
       <form className="flex items-center " onSubmit={onSubmit}>
         <input
           className="border-green-300 border bg-transparent rounded p-2 flex-grow mr-2"
-          type="task"
-          name="task"
-          placeholder="Task"
-          onChange={(e) => setTaskTitle(e.currentTarget.value)}
+          type="title"
+          name="title"
+          placeholder="New Task"
         />
         <button
           type="submit"
-          className="py-1 px-4 text-lg bg-green-400 rounded text-black"
+          disabled={mutationLoading}
+          className="py-1 px-4 text-lg bg-green-400 rounded text-black disabled:bg-gray-500"
         >
-          Submit
+          {mutationLoading ? 'Saving...' : 'Submit'}
         </button>
       </form>
     </div>
@@ -183,13 +151,14 @@ const LoginForm = () => {
 
 /** Simple header element with title and signout button */
 const AppHeader = ({ isSignedIn }: { isSignedIn: boolean }) => {
+  console.log({ isSignedIn })
   return (
     <header className="bg-black shadow shadow-green-400 px-4">
       <div className="flex max-w-4xl mx-auto items-center h-16">
         <div className=" text-white text-lg flex-grow">
           Supabase pg_graphql Example
         </div>
-        {!isSignedIn ?? (
+        {isSignedIn && (
           <button
             className="py-1 px-2 text-white border border-white rounded"
             onClick={() => supabase.auth.signOut()}

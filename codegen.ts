@@ -5,7 +5,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 const config: CodegenConfig = {
   schema: `${supabaseUrl}/graphql/v1?apikey=${supabaseKey}`,
-  documents: ['**/*.tsx'],
+  documents: ['**/*.tsx','**/*.ts'],
   generates: {
     './src/__generated__/': {
       preset: 'client',
