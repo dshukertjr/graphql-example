@@ -21,11 +21,21 @@ export const tasksQuery = gql(`
     }
 `)
 
-export const taskMutation = gql(`
+export const taskInsert = gql(`
     mutation TaskMutation($objects: [tasksInsertInput!]!) {
         insertIntotasksCollection(objects: $objects) {
             records {
             title
+            }
+        }
+    }
+`)
+
+export const taskUpdate = gql(`
+    mutation Mutation($set: tasksUpdateInput!, $filter: tasksFilter) {
+        updatetasksCollection(set: $set, filter: $filter) {
+            records {
+                is_completed
             }
         }
     }

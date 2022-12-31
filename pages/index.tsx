@@ -4,7 +4,7 @@ import Head from 'next/head'
 import React, { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
 import { OrderByDirection } from '../src/__generated__/graphql'
-import { supabase, taskMutation, tasksQuery } from '../src/constants'
+import { supabase, taskInsert, tasksQuery, taskUpdate } from '../src/constants'
 
 const Home: NextPage = () => {
   const [session, setSession] = useState<Session | null>(null)
@@ -48,9 +48,8 @@ export default Home
 const TodoList = (): JSX.Element => {
   const {
     loading,
-    error: queryError,
     data: queryData,
-    refetch,
+    refetch: refetchTasks,
   } = useQuery(tasksQuery, {
     variables: {
       orderBy: [
@@ -61,10 +60,9 @@ const TodoList = (): JSX.Element => {
     },
   })
 
-  const [
-    insertTask,
-    { error: mutationError, data: mutationData, loading: mutationLoading },
-  ] = useMutation(taskMutation)
+  const [insertTask, { loading: mutationLoading }] = useMutation(taskInsert)
+
+  const [updateTask, { loading: updateLoading }] = useMutation(taskUpdate)
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     const formElement = event.currentTarget
@@ -76,17 +74,29 @@ const TodoList = (): JSX.Element => {
       variables: {
         objects: [{ title }],
       },
-      onCompleted: () => {
-        refetch()
-      },
+      onCompleted: () => refetchTasks(),
     })
     formElement.reset()
   }
 
+  const toggleTaskStatus = async (taskId: string, updatedStatus: boolean) => {
+    await updateTask({
+      variables: {
+        set: {
+          is_completed: updatedStatus,
+        },
+        filter: {
+          id: {
+            eq: taskId,
+          },
+        },
+      },
+      onCompleted: () => refetchTasks(),
+    })
+  }
+
   if (loading) {
     return <div>Loading</div>
-  } else if (queryError) {
-    return <div>Error occured: {queryError.message}</div>
   }
 
   const tasks = queryData!.tasksCollection!.edges
@@ -94,8 +104,33 @@ const TodoList = (): JSX.Element => {
     <div className="h-full flex flex-col">
       <div className="flex-grow min-h-0 overflow-y-auto">
         {tasks.map((task) => (
-          <div key={task.node.id} className="text-lg p-1">
-            {task.node.title}
+          <div key={task.node.id} className="text-lg p-1 flex">
+            <div className="flex-grow">{task.node.title}</div>
+            <button
+              className="px-2"
+              onClick={() =>
+                toggleTaskStatus(task.node.id, !task.node.is_completed)
+              }
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className={`w-6 h-6 ${
+                  task.node.is_completed
+                    ? 'stroke-green-500'
+                    : 'stroke-gray-500'
+                }`}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </button>
           </div>
         ))}
       </div>
@@ -111,7 +146,7 @@ const TodoList = (): JSX.Element => {
           disabled={mutationLoading}
           className="py-1 px-4 text-lg bg-green-400 rounded text-black disabled:bg-gray-500"
         >
-          {mutationLoading ? 'Saving...' : 'Submit'}
+          {mutationLoading ? 'Saving...' : 'Save'}
         </button>
       </form>
     </div>
