@@ -170,7 +170,7 @@ const LoginForm = () => {
 
   return (
     <form
-      className="flex flex-col justify-center space-y-2 max-w-md px-4"
+      className="flex flex-col justify-center space-y-2 max-w-md px-4 h-full"
       onSubmit={sendMagicLink}
     >
       <input
@@ -179,7 +179,10 @@ const LoginForm = () => {
         name="email"
         placeholder="Email"
       />
-      <button type="submit" className="py-1 px-4 text-lg bg-green-400 rounded">
+      <button
+        type="submit"
+        className="py-1 px-4 text-lg bg-green-400 rounded text-black"
+      >
         Send Magic Link
       </button>
     </form>
