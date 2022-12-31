@@ -1,4 +1,4 @@
-import '../../styles/globals.css'
+import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import {
   ApolloClient,
@@ -6,7 +6,7 @@ import {
   createHttpLink,
   InMemoryCache,
 } from '@apollo/client'
-import { supabase, supabaseAnonKey, supabaseUrl } from '../constants'
+import { supabase, supabaseAnonKey, supabaseUrl } from '../src/constants'
 import { setContext } from '@apollo/client/link/context'
 
 const httpLink = createHttpLink({
