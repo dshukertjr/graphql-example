@@ -6,7 +6,7 @@ import {
 import type { NextComponentType, NextPage } from 'next'
 import Head from 'next/head'
 import React, { ReactComponentElement, useEffect, useState } from 'react'
-import { useQuery } from '@apollo/client'
+import { useMutation, useQuery } from '@apollo/client'
 import { gql } from '../src/__generated__/gql'
 import { OrderByDirection } from '../src/__generated__/graphql'
 import { supabase, supabaseAnonKey, supabaseUrl } from '../src/constants'
@@ -41,7 +41,7 @@ const Home: NextPage = () => {
 
       <AppHeader isSignedIn={!!session} />
 
-      <main className="text-white flex-grow flex items-center justify-center max-w-4xl mx-auto">
+      <main className="text-white flex-grow max-w-4xl mx-auto">
         {session ? <TodoList /> : <LoginForm />}
       </main>
     </div>
@@ -50,7 +50,7 @@ const Home: NextPage = () => {
 
 export default Home
 
-const tasksQuery = gql(/* GraphQL */ `
+const tasksQuery = gql(`
   query TasksQuery($orderBy: [tasksOrderBy!]) {
     tasksCollection(orderBy: $orderBy) {
       edges {
@@ -64,14 +64,32 @@ const tasksQuery = gql(/* GraphQL */ `
   }
 `)
 
+const taskMutation = gql(`
+  mutation TaskMutation($objects: [tasksInsertInput!]!) {
+    insertIntotasksCollection(objects: $objects) {
+      records {
+        title
+      }
+    }
+  }
+`)
+
 const TodoList = (): JSX.Element => {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const formElement = event.currentTarget
     event.preventDefault()
-    const { task } = Object.fromEntries(new FormData(event.currentTarget))
-    if (typeof task !== 'string') return
+    if (!taskTitle) return
+    await insertTask()
+    console.log({ mutationError })
+    console.log({ mutationData })
+    formElement.reset()
   }
 
-  const { loading, error, data } = useQuery(tasksQuery, {
+  const {
+    loading,
+    error: queryError,
+    data: queryData,
+  } = useQuery(tasksQuery, {
     variables: {
       orderBy: [
         {
@@ -81,18 +99,34 @@ const TodoList = (): JSX.Element => {
     },
   })
 
+  const [taskTitle, setTaskTitle] = useState<string>('')
+
+  const [insertTask, { error: mutationError, data: mutationData }] =
+    useMutation(taskMutation, {
+      // variables are also typed!
+      variables: {
+        objects: [
+          {
+            title: taskTitle,
+          },
+        ],
+      },
+    })
+
   if (loading) {
     return <div>Loading</div>
-  } else if (error) {
-    return <div>Error occured: {error.message}</div>
+  } else if (queryError) {
+    return <div>Error occured: {queryError.message}</div>
   }
 
-  const tasks = data!.tasksCollection!.edges
+  const tasks = queryData!.tasksCollection!.edges
   return (
-    <div className="h-full flex flex-col w-full">
+    <div className="h-full flex flex-col">
       <div className="flex-grow">
         {tasks.map((task) => (
-          <div className="text-lg">{task.node.title}</div>
+          <div key={task.node.id} className="text-lg">
+            {task.node.title}
+          </div>
         ))}
       </div>
       <form className="flex items-center " onSubmit={onSubmit}>
@@ -101,6 +135,7 @@ const TodoList = (): JSX.Element => {
           type="task"
           name="task"
           placeholder="Task"
+          onChange={(e) => setTaskTitle(e.currentTarget.value)}
         />
         <button
           type="submit"
