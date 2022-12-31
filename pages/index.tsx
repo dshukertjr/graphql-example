@@ -46,24 +46,11 @@ const Home: NextPage = () => {
 export default Home
 
 const TodoList = (): JSX.Element => {
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    const formElement = event.currentTarget
-    event.preventDefault()
-    const { title } = Object.fromEntries(new FormData(event.currentTarget))
-    if (typeof title !== 'string') return
-    if (!title) return
-    await insertTask({
-      variables: {
-        objects: [{ title }],
-      },
-    })
-    formElement.reset()
-  }
-
   const {
     loading,
     error: queryError,
     data: queryData,
+    refetch,
   } = useQuery(tasksQuery, {
     variables: {
       orderBy: [
@@ -77,9 +64,24 @@ const TodoList = (): JSX.Element => {
   const [
     insertTask,
     { error: mutationError, data: mutationData, loading: mutationLoading },
-  ] = useMutation(taskMutation, {
-    refetchQueries: [{ query: tasksQuery }],
-  })
+  ] = useMutation(taskMutation)
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const formElement = event.currentTarget
+    event.preventDefault()
+    const { title } = Object.fromEntries(new FormData(event.currentTarget))
+    if (typeof title !== 'string') return
+    if (!title) return
+    await insertTask({
+      variables: {
+        objects: [{ title }],
+      },
+      onCompleted: () => {
+        refetch()
+      },
+    })
+    formElement.reset()
+  }
 
   if (loading) {
     return <div>Loading</div>
@@ -92,14 +94,14 @@ const TodoList = (): JSX.Element => {
     <div className="h-full flex flex-col">
       <div className="flex-grow min-h-0 overflow-y-auto">
         {tasks.map((task) => (
-          <div key={task.node.id} className="text-lg">
+          <div key={task.node.id} className="text-lg p-1">
             {task.node.title}
           </div>
         ))}
       </div>
-      <form className="flex items-center " onSubmit={onSubmit}>
+      <form className="flex items-center p-1" onSubmit={onSubmit}>
         <input
-          className="border-green-300 border bg-transparent rounded p-2 flex-grow mr-2"
+          className="border-green-300 border bg-transparent rounded py-1 px-2 flex-grow mr-2"
           type="title"
           name="title"
           placeholder="New Task"
