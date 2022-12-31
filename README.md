@@ -7,7 +7,7 @@ Simple Next.js todo list app built with the GraphQL extension of Supabase, pg_gr
 - Read and write to Supabase database via GraphQL
 - Works with Row Level Security using Supabase auth
 
-## Stack
+## Tech Stack
 
 - [Supabase](https://supabase.com) - provides auth and database
 - [pg_graphql](https://github.com/supabase/pg_graphql) - GraphQL extension for Postgres
