@@ -1,6 +1,31 @@
-# SupabaseGraphQLTODOリスト
+# Supabase GraphQL Todo List App
 
-SupabaseのGraphQL用エクステンションであるpg_graphqlを使って作ったTODOリストサンプルアプリです。
+![Supabase GraphQL Todo List App](https://raw.githubusercontent.com/dshukertjr/graphql-example/main/misc/screenrecording.gif)
+
+Simple Next.js todo list app built with the GraphQL extension of Supabase, pg_graphql. 
+
+- Read and write to Supabase database via GraphQL
+- Works with Row Level Security using Supabase auth
+
+## Stack
+
+- [Supabase](https://supabase.com) - provides auth and database
+- [pg_graphql](https://github.com/supabase/pg_graphql) - GraphQL extension for Postgres
+- [Next.js](https://nextjs.org/) - React framework
+- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [Apollo Client](https://www.apollographql.com/docs/react/) - GraphQL client
+
+## Running the app
+
+1. Clone the repo
+1. Run `npm install`
+1. Run `npm run compile` to generate types
+1. Run the following SQL in your Supabase project from the SQL editor
+1. Create a `.env.local` file with the following variables
+    - `NEXT_PUBLIC_SUPABASE_URL`
+    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+1. Run `npm run dev` to start the app
+
 
 ```sql
 create table if not exists tasks (
@@ -18,5 +43,3 @@ create policy "Users can update their own tasks" on public.tasks for update  usi
 create policy "Users can delete their own tasks" on public.tasks for delete using (auth.uid() = user_id);
 ```
 
-1. run `npm install`
-1. run `npm run compile` to generate types
