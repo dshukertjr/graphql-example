@@ -3,8 +3,8 @@ import type { NextPage } from 'next'
 import Head from 'next/head'
 import React, { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
-import { OrderByDirection } from '../src/__generated__/graphql'
 import { supabase, taskInsert, tasksQuery, taskUpdate } from '../src/constants'
+import { OrderByDirection } from '../src/__generated__/graphql'
 
 const Home: NextPage = () => {
   const [session, setSession] = useState<Session | null>(null)

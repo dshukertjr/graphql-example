@@ -2,9 +2,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "graphql-codegen && next build",
+    "build": "npm run compile && next build",
     "start": "next start",
-    "compile": "graphql-codegen"
+    "compile": "graphql-codegen --require dotenv/config --config codegen.ts dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@apollo/client": "^3.7.3",

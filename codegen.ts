@@ -1,13 +1,12 @@
-import { CodegenConfig } from '@graphql-codegen/cli';
-import { supabaseAnonKey, supabaseUrl } from './src/constants';
-
+import { CodegenConfig } from '@graphql-codegen/cli'
+import { supabaseAnonKey, supabaseUrl } from './src/constants'
 
 const config: CodegenConfig = {
   // The Supabase GraphQL endpoint
   schema: `${supabaseUrl}/graphql/v1?apikey=${supabaseAnonKey}`,
 
   // Which files to look for queries and mutations
-  documents: ['**/*.tsx','**/*.ts'],
+  documents: ['./src/constants.ts'],
 
   // Which directory to put the output files
   generates: {
@@ -16,10 +15,10 @@ const config: CodegenConfig = {
       plugins: [],
       presetConfig: {
         gqlTagName: 'gql',
-      }
-    }
+      },
+    },
   },
   ignoreNoDocuments: true,
-};
+}
 
-export default config;
+export default config
